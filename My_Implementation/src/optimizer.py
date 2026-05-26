@@ -1,10 +1,4 @@
-"""
-Shared result type and factory for all optimizers.
-
-All three optimizers (PSO, DE, random) return the same OptimizerResult,
-so the pipeline code doesn't need to care which one is used.
-This also lets us swap them for ablation experiments.
-"""
+# shared result type so PSO, DE, and random search can be swapped easily
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -25,7 +19,6 @@ OptimizerFn = Callable[..., OptimizerResult]
 
 
 def get_optimizer(name: str) -> OptimizerFn:
-    """Return the optimizer function by name: 'pso', 'de', or 'random'."""
     name = name.lower().strip()
     if name == "pso":
         from pso import pso_maximize_unified

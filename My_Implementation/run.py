@@ -1,22 +1,11 @@
-"""Run the full PatternChrome pipeline from the command line.
-
-Three ways to call it
----------------------
-# 1) Synthetic smoke test (no data needed, ~2 min):
-python run.py --synthetic
-
-# 2) Real data already split — matches data/E003/classification/ layout:
-python run.py --train-csv data/E003/classification/train.csv \\
-              --valid-csv data/E003/classification/valid.csv \\
-              --test-csv  data/E003/classification/test.csv  \\
-              --cell E003
-
-# 3) Real data as a single CSV (will be split automatically):
-python run.py --csv data/E003.csv --cell E003
-
-# Tweak speed/quality:
-python run.py --synthetic --n-patterns 12 --pso-iters 20 --pso-particles 12
-"""
+# CLI entry point for the PatternChrome pipeline
+#
+# usage examples:
+#   python run.py --synthetic                          # quick smoke test, no data needed
+#   python run.py --csv data/E003.csv --cell E003      # single CSV, auto-split
+#   python run.py --train-csv data/E003/classification/train.csv \
+#                 --valid-csv data/E003/classification/valid.csv \
+#                 --test-csv  data/E003/classification/test.csv --cell E003
 from __future__ import annotations
 
 import argparse
@@ -40,35 +29,31 @@ from plots import (plot_positional_importance, plot_per_hm_correlation,
                    plot_waterfall, plot_auc_comparison, plot_pattern)
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser():
     p = argparse.ArgumentParser(
         description="PatternChrome pipeline runner",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     src = p.add_mutually_exclusive_group(required=True)
-    src.add_argument("--synthetic", action="store_true",
-                     help="Generate synthetic data with planted patterns")
-    src.add_argument("--csv", type=str, metavar="PATH",
-                     help="Single DeepChrome-format CSV — auto-split")
-    src.add_argument("--train-csv", type=str, metavar="PATH",
-                     help="Pre-split train CSV (use with --valid-csv + --test-csv)")
+    src.add_argument("--synthetic",  action="store_true")
+    src.add_argument("--csv",        type=str, metavar="PATH")
+    src.add_argument("--train-csv",  type=str, metavar="PATH")
 
-    p.add_argument("--valid-csv", type=str, metavar="PATH")
-    p.add_argument("--test-csv",  type=str, metavar="PATH")
-
-    p.add_argument("--cell",  type=str, default="sample")
-    p.add_argument("--out",   type=str, default="results")
-    p.add_argument("--seed",  type=int, default=0)
-    p.add_argument("--quiet", action="store_true")
-    p.add_argument("--n-patterns",    type=int, default=15)
-    p.add_argument("--pso-particles", type=int, default=15)
-    p.add_argument("--pso-iters",     type=int, default=25)
-    p.add_argument("--inner-subset",  type=int, default=2000)
+    p.add_argument("--valid-csv",    type=str, metavar="PATH")
+    p.add_argument("--test-csv",     type=str, metavar="PATH")
+    p.add_argument("--cell",         type=str, default="sample")
+    p.add_argument("--out",          type=str, default="results")
+    p.add_argument("--seed",         type=int, default=0)
+    p.add_argument("--quiet",        action="store_true")
+    p.add_argument("--n-patterns",   type=int, default=15)
+    p.add_argument("--pso-particles",type=int, default=15)
+    p.add_argument("--pso-iters",    type=int, default=25)
+    p.add_argument("--inner-subset", type=int, default=2000)
     return p
 
 
-def load_data(args) -> Dataset:
+def load_data(args):
     if args.synthetic:
         print("[data] synthetic dataset")
         X, y, gids = make_synthetic(n_genes=18000, n_bins=100, seed=args.seed)
@@ -90,7 +75,7 @@ def load_data(args) -> Dataset:
     return ds
 
 
-def save_plots(res, ds: Dataset, args) -> None:
+def save_plots(res, ds, args):
     out, cell = args.out, args.cell
     print(f"\n[plots] writing to {out}/")
 

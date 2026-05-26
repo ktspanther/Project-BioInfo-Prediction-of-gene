@@ -1,14 +1,6 @@
-"""
-Hyperparameter tuning (Stage 4) and final model training (Stage 5).
-
-The paper tunes XGBoost hyperparameters with PSO on the validation set.
-Bounds match the original R code's hyperparameter_lower / hyperparameter_upper:
-  nrounds [300, 700], eta [0.005, 0.2], gamma [0, 10], max_depth [1, 10],
-  lambda [1, 5], alpha [1, 10], min_child_weight [0, 10], subsample [0.1, 0.7]
-"""
+# Hyperparameter tuning (Stage 4) and final model training (Stage 5)
 from __future__ import annotations
 
-from dataclasses import dataclass
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import roc_auc_score
@@ -17,20 +9,22 @@ from pso import pso_maximize
 from optimizer import get_optimizer
 
 
-# Bounds match hyperparameter_lower and hyperparameter_upper in PatternChrome.R
+# Hyperparameter tuning parameters
+# lower bounds of parameters in PSO for hyperparameter tuning
+# upper bounds of parameters in PSO for hyperparameter tuning
 HP_BOUNDS = np.array([
     [300,   700],   # nrounds
     [0.005, 0.2],   # eta
     [0,     10],    # gamma
     [1,     10],    # max_depth
-    [1,      5],    # lambda (L2 regularization)
-    [1,     10],    # alpha  (L1 regularization)
+    [1,      5],    # lambda
+    [1,     10],    # alpha
     [0,     10],    # min_child_weight
     [0.1,   0.7],   # subsample
 ], dtype=float)
 
 
-def _decode_hp(vec: np.ndarray) -> dict:
+def _decode_hp(vec):
     return dict(
         num_boost_round=int(round(vec[0])),
         eta=float(vec[1]),
@@ -43,14 +37,10 @@ def _decode_hp(vec: np.ndarray) -> dict:
     )
 
 
-def tune_hyperparameters(X_train: np.ndarray, y_train: np.ndarray,
-                         X_val: np.ndarray, y_val: np.ndarray,
-                         n_particles: int = 20, max_iter: int = 20,
-                         patience: int = 3, seed: int = 0,
-                         optimizer: str = "pso",
-                         verbose: bool = True) -> dict:
-    """Use PSO to find good XGBoost hyperparameters on the validation set."""
-
+def tune_hyperparameters(X_train, y_train, X_val, y_val,
+                         n_particles=20, max_iter=20, patience=3,
+                         seed=0, optimizer="pso", verbose=True):
+    # same structure as the hyperparameter_tuning function in PatternChrome.R
     dtrain = xgb.DMatrix(X_train, label=y_train)
     dval   = xgb.DMatrix(X_val,   label=y_val)
 
@@ -82,9 +72,7 @@ def tune_hyperparameters(X_train: np.ndarray, y_train: np.ndarray,
     return hp
 
 
-def train_final(X_train: np.ndarray, y_train: np.ndarray, hp: dict,
-                seed: int = 0) -> xgb.Booster:
-    """Train the final model with the tuned hyperparameters."""
+def train_final(X_train, y_train, hp, seed=0):
     dtrain = xgb.DMatrix(X_train, label=y_train)
     params = {
         "objective":        "binary:logistic",
@@ -103,9 +91,7 @@ def train_final(X_train: np.ndarray, y_train: np.ndarray, hp: dict,
     return xgb.train(params, dtrain, num_boost_round=hp["num_boost_round"])
 
 
-def predict_and_score(booster: xgb.Booster, X: np.ndarray,
-                      y: np.ndarray) -> tuple[np.ndarray, float]:
-    """Return (predicted probabilities, AUC) on a held-out set."""
+def predict_and_score(booster, X, y):
     d = xgb.DMatrix(X, label=y)
     probs = booster.predict(d)
     auc = float(roc_auc_score(y, probs))

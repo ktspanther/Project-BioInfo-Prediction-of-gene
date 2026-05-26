@@ -1,13 +1,4 @@
-"""
-End-to-end PatternChrome pipeline.
-
-Runs the five stages from the paper in order:
-  1. Binning           (handled by the data loader)
-  2. Feature extraction (PSO + XGBoost, greedy pattern discovery)
-  3. Backward elimination (drop redundant patterns)
-  4. Hyperparameter tuning (PSO on validation AUC)
-  5. Final prediction (train final XGBoost, evaluate on test set)
-"""
+# runs the full PatternChrome pipeline — same 5 stages as PatternChrome.R
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -39,10 +30,7 @@ class PipelineResult:
     timings: dict = field(default_factory=dict)
 
 
-def run_pipeline(ds: Dataset,
-                 fe_cfg: FEConfig | None = None,
-                 verbose: bool = True) -> PipelineResult:
-    """Run all five stages and return everything needed for analysis."""
+def run_pipeline(ds: Dataset, fe_cfg=None, verbose=True) -> PipelineResult:
     t = {}
 
     t0 = time()
@@ -51,6 +39,7 @@ def run_pipeline(ds: Dataset,
                                               cfg=fe_cfg, verbose=verbose)
     t["feature_extraction"] = time() - t0
 
+    #### Backward elimination ####
     t0 = time()
     if verbose: print("\n=== Stage 3: backward elimination ===")
     patterns, X_train_feat = backward_elimination(
@@ -60,6 +49,7 @@ def run_pipeline(ds: Dataset,
     X_test_feat = build_feature_matrix(ds.X_test, patterns)
     t["backward_elimination"] = time() - t0
 
+    #### XGB hyperparameter tuning ####
     t0 = time()
     if verbose: print("\n=== Stage 4: hyperparameter tuning ===")
     hp = tune_hyperparameters(X_train_feat, ds.y_train,
