@@ -1,0 +1,4 @@
+optimizer,test_auc,val_auc,train_auc,n_patterns,wall_time_s,feat_extr_s,backward_elim_s,hp_tune_s,final_train_s
+pso,0.8958,0.9225,0.9277,6,124.1334,106.7933,4.3543,12.8401,0.0745
+de,0.8972,0.9212,0.9318,9,300.3367,258.3624,2.3211,39.2289,0.1212
+random,0.8972,0.9240,0.9430,9,121.5059,80.4188,2.4664,37.4610,0.2150
