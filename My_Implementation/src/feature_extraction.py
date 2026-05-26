@@ -41,36 +41,32 @@ class FEConfig:
     optimizer: str = "pso"
 
 
-def decode(vec: np.ndarray, n_hm: int, n_bins: int) -> Pattern:
-    # turn a PSO position vector into a Pattern object
+def decode(vec: np.ndarray, hm_idx: int, n_bins: int) -> Pattern:
+    # turn a PSO position vector into a Pattern object (HM is fixed, not part of vec)
     start = int(np.floor(vec[0]))
     end   = int(np.floor(vec[1]))
     start = max(0, min(n_bins - 1, start))
     end   = max(0, min(n_bins - 1, end))
     lo, hi = min(start, end), max(start, end)
 
-    hm = int(np.floor(vec[2]))
-    hm = max(0, min(n_hm - 1, hm))
+    threshold = float(np.clip(vec[2], THR_LO, THR_HI))
 
-    threshold = float(np.clip(vec[3], THR_LO, THR_HI))
-
-    n_pts = int(np.floor(vec[4]))
+    n_pts = int(np.floor(vec[3]))
     n_pts = max(MIN_CPS, min(NUM_CPS, n_pts))
 
-    heights = np.clip(vec[5:5 + n_pts], 0.0, 1.0).astype(np.float32)
+    heights = np.clip(vec[4:4 + n_pts], 0.0, 1.0).astype(np.float32)
 
-    return Pattern(heights=heights, threshold=threshold, hm_index=hm,
+    return Pattern(heights=heights, threshold=threshold, hm_index=hm_idx,
                    start_bin=lo, end_bin=hi)
 
 
-def bounds_for(n_hm: int, n_bins: int) -> np.ndarray:
-    # objective_lower / objective_upper from PatternChrome.R — adapted for Python indexing
+def bounds_for(n_bins: int) -> np.ndarray:
+    # objective_lower / objective_upper from PatternChrome.R — HM handled separately
     rows = [
-        [0, n_bins - 1],        # start bin  (R: 1 to floor(10000/bin_size))
-        [0, n_bins - 1],        # end bin
-        [0, n_hm - 0.001],      # HM index   (R: 1.0001 to 5.999)
-        [THR_LO, THR_HI],       # threshold  (R: 0.25 to 0.75)
-        [MIN_CPS, NUM_CPS],     # number of anchor points  (R: floor(num_cps/2) to num_cps)
+        [0, n_bins - 1],    # start bin  (R: 1 to floor(10000/bin_size))
+        [0, n_bins - 1],    # end bin
+        [THR_LO, THR_HI],   # threshold  (R: 0.25 to 0.75)
+        [MIN_CPS, NUM_CPS], # number of anchor points  (R: floor(num_cps/2) to num_cps)
     ]
     rows += [[0.0, 1.0]] * NUM_CPS   # rep(0, num_cps) to rep(1, num_cps)
     return np.asarray(rows, dtype=float)
@@ -111,35 +107,48 @@ def extract_features(X_train, y_train, cfg=None, verbose=True):
 
         min_d = MIN_DIST
         max_d = _max_dist(n_bins)
-
-        def objective(vec):
-            # if(!between((floor(pars[1])-floor(pars[2]))^2, min_distance, max_distance)){return(-Inf)}
-            start = int(np.floor(vec[0]))
-            end   = int(np.floor(vec[1]))
-            if not (min_d <= (start - end) ** 2 <= max_d):
-                return 0.5
-
-            pat = decode(vec, n_hm, n_bins)
-            new_col = pattern_frequencies(Xs, pat).reshape(-1, 1)
-            X_cand = np.hstack([base, new_col]) if base.size else new_col
-            n = X_cand.shape[0]
-            half = n // 2
-            return _train_xgb_auc(X_cand[:half], ys[:half],
-                                  X_cand[half:], ys[half:], cfg)
-
         optimizer_fn = get_optimizer(cfg.optimizer)
-        result = optimizer_fn(
-            objective,
-            bounds=bounds_for(n_hm, n_bins),
-            n_particles=cfg.pso_particles,
-            max_iter=cfg.pso_iters,
-            patience=cfg.pso_patience,
-            target_score=None,
-            seed=cfg.seed + round_idx,
-            verbose=False,
-        )
 
-        new_pat = decode(result.best_x, n_hm, n_bins)
+        # Run PSO once per histone mark, then pick the best pattern across all marks.
+        # This replaces the joint HM+shape search that caused PSO to always lock onto
+        # H3K4me3 and never explore the other 4 markers.
+        best_hm_score  = -1.0
+        best_hm_result = None
+        best_hm_idx    = 0
+
+        for hm_idx in range(n_hm):
+
+            def objective(vec, _hm=hm_idx):
+                # if(!between((floor(pars[1])-floor(pars[2]))^2, min_distance, max_distance)){return(-Inf)}
+                start = int(np.floor(vec[0]))
+                end   = int(np.floor(vec[1]))
+                if not (min_d <= (start - end) ** 2 <= max_d):
+                    return 0.5
+
+                pat = decode(vec, _hm, n_bins)
+                new_col = pattern_frequencies(Xs, pat).reshape(-1, 1)
+                X_cand = np.hstack([base, new_col]) if base.size else new_col
+                half = X_cand.shape[0] // 2
+                return _train_xgb_auc(X_cand[:half], ys[:half],
+                                      X_cand[half:], ys[half:], cfg)
+
+            result = optimizer_fn(
+                objective,
+                bounds=bounds_for(n_bins),
+                n_particles=cfg.pso_particles,
+                max_iter=cfg.pso_iters,
+                patience=cfg.pso_patience,
+                target_score=None,
+                seed=cfg.seed + round_idx * n_hm + hm_idx,
+                verbose=False,
+            )
+
+            if result.best_score > best_hm_score:
+                best_hm_score  = result.best_score
+                best_hm_result = result
+                best_hm_idx    = hm_idx
+
+        new_pat = decode(best_hm_result.best_x, best_hm_idx, n_bins)
         new_col_full = pattern_frequencies(X_train, new_pat)
         feat_cols.append(new_col_full)
         patterns.append(new_pat)
@@ -159,7 +168,7 @@ def extract_features(X_train, y_train, cfg=None, verbose=True):
 
         if verbose:
             print(f"[FE round {round_idx + 1:2d}/{cfg.n_patterns_max}] "
-                  f"inner_auc={result.best_score:.4f}  "
+                  f"best_hm={best_hm_idx}  inner_auc={best_hm_score:.4f}  "
                   f"full_train_auc={full_auc:.4f}  "
                   f"pat={new_pat}  stale={stale}")
 

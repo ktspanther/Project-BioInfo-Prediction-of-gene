@@ -25,7 +25,7 @@ def random_maximize(
     bounds: np.ndarray,
     n_particles: int = 15,
     max_iter: int = 25,
-    patience: int = 8,            # ignored
+    patience: int = 8,
     target_score: float | None = None,
     seed: int = 0,
     verbose: bool = False,
