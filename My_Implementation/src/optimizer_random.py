@@ -1,16 +1,5 @@
 """
-Uniform random search.
-
-This is the dumbest possible baseline: draw N random points uniformly in
-the bounds, evaluate the objective at each, return the best one.
-
-Why it matters: if PSO or DE only narrowly beats random search, then the
-optimization is not the part doing the heavy lifting — the gain probably
-comes from the pattern-matching idea itself, not the optimizer. Including
-random search makes the comparison HONEST instead of cherry-picked.
-
-Total evaluations are kept comparable to PSO/DE so the comparison is fair
-in terms of compute budget.
+Uniform random search
 """
 from __future__ import annotations
 

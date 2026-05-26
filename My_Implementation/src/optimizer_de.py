@@ -7,16 +7,6 @@ each candidate's new position is built from differences between OTHER
 candidates' positions, scaled by a mutation factor, then recombined with
 the candidate's current position via crossover.
 
-Why DE is a fair alternative to PSO:
-- Same family: gradient-free, population-based, continuous search space
-- Long track record in benchmark suites (often beats PSO on multimodal
-  problems)
-- Available in scipy with no extra installation (`scipy.optimize.differential_evolution`)
-- Different mechanism: PSO is mostly attractor-based (pulled toward bests),
-  DE is mostly diversity-based (random vector differences). If both give
-  similar AUCs, that's strong evidence the optimization step isn't the
-  bottleneck.
-
 Reference: Storn & Price, "Differential Evolution — A Simple and Efficient
 Heuristic for Global Optimization over Continuous Spaces", 1997.
 """

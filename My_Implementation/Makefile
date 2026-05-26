@@ -97,9 +97,5 @@ compare-E123:
 
 compare-all: compare-E003 compare-E123
 
-notebook:
-	$(JUPYTER) lab
-
 clean:
 	rm -rf $(OUT)
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

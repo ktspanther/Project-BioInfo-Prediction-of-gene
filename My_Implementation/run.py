@@ -1,11 +1,4 @@
 # CLI entry point for the PatternChrome pipeline
-#
-# usage examples:
-#   python run.py --synthetic                          # quick smoke test, no data needed
-#   python run.py --csv data/E003.csv --cell E003      # single CSV, auto-split
-#   python run.py --train-csv data/E003/classification/train.csv \
-#                 --valid-csv data/E003/classification/valid.csv \
-#                 --test-csv  data/E003/classification/test.csv --cell E003
 from __future__ import annotations
 
 import argparse

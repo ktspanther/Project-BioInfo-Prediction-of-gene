@@ -1,1 +1,0 @@
-"""PatternChrome — Python re-implementation."""
