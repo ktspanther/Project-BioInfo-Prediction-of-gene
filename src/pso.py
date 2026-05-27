@@ -1,5 +1,4 @@
 # PSO parameters during feature extraction and hyperparameter tuning
-# read about PSO parameters here: https://www.rdocumentation.org/packages/pso/versions/1.0.4/topics/psoptim
 from __future__ import annotations
 
 from dataclasses import dataclass

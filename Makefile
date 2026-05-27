@@ -1,6 +1,3 @@
-# Makefile for the PatternChrome Python re-implementation
-# usage: make test | make run-E003 | make compare-E003
-
 ENV_NAME  := patternchrome
 PYTHON    := conda run -n $(ENV_NAME) python
 JUPYTER   := conda run -n $(ENV_NAME) jupyter
@@ -8,7 +5,7 @@ JUPYTER   := conda run -n $(ENV_NAME) jupyter
 DATA_DIR  := data
 OUT       := results
 
-# pipeline parameters — match PatternChrome.R defaults
+# pipeline parameters match PatternChrome.R defaults
 # initial_swarm_size=20, initial_maxit=20, num_sample_genes=3000
 N_PATTERNS    ?= 20
 PSO_PARTICLES ?= 20

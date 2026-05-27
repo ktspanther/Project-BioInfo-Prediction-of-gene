@@ -1,36 +1,5 @@
 """
-Optimizer comparison study.
-
-This is the SCIENTIFIC CONTRIBUTION beyond just re-running PatternChrome's
-pipeline: a head-to-head comparison of three optimizers slotted into the
-same feature-extraction step.
-
-Question
---------
-Is PSO essential to PatternChrome's success, or would any reasonable
-gradient-free optimizer give comparable AUC?
-
-Experimental design
--------------------
-- Fix everything except the optimizer: same data split, same bin width,
-  same XGBoost settings, same backward elimination, same evaluation
-  metric.
-- Run the full pipeline 3 times per cell line, once with each optimizer
-  ("pso", "de", "random").
-- Same compute budget for each: same n_particles * max_iter, so each
-  optimizer evaluates the objective the same number of times.
-- Same seed for reproducibility, but different per-round seeds so we
-  don't trivially get identical patterns.
-
-Outputs
--------
-results/optimizer_comparison_<cell>.png
-    Bar chart of test AUC, validation AUC, runtime, and feature count
-    for each optimizer.
-results/optimizer_comparison_<cell>.csv
-    Raw numbers for the article's results table.
-results/optimizer_history_<cell>.png
-    Best-score-so-far curve over wall time, one line per optimizer.
+Optimizer comparison
 """
 from __future__ import annotations
 
