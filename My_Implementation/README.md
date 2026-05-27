@@ -1,6 +1,6 @@
 # PatternChrome — Python re-implementation
 
-Python port of [PatternChrome (Paul et al., Bioinformatics 2025)](https://doi.org/10.1093/bioinformatics/btaf033) done for a Master's class project.
+Python port of [PatternChrome (Paul et al., Bioinformatics 2025)](https://doi.org/10.1093/bioinformatics/btaf033)
 The original code is in R at <https://gitlab.gwdg.de/MedBioinf/generegulation/patternchrome>.
 
 ## What the paper does

@@ -1,14 +1,5 @@
 """
-Differential Evolution wrapper.
-
-Differential Evolution (Storn & Price, 1997) is a population-based,
-gradient-free optimizer like PSO, but with very different update rules:
-each candidate's new position is built from differences between OTHER
-candidates' positions, scaled by a mutation factor, then recombined with
-the candidate's current position via crossover.
-
-Reference: Storn & Price, "Differential Evolution — A Simple and Efficient
-Heuristic for Global Optimization over Continuous Spaces", 1997.
+Differential Evolution
 """
 from __future__ import annotations
 

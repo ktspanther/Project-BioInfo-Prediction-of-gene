@@ -1,9 +1,3 @@
-"""
-Plotting utilities that reproduce the paper's signature figures.
-
-Each function returns a matplotlib Figure that the caller can save or
-display. The aim is to give you ready-made slides for the class talk.
-"""
 from __future__ import annotations
 
 from typing import Sequence
